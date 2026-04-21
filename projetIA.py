@@ -19,6 +19,57 @@ def receive_message(sock):
         data += sock.recv(size - len(data))        # lit exactement 'size' bytes
     return json.loads(data.decode('utf-8'))  # transforme en dictionnaire python
 
+
+Name = "MrCalvitie"
+team = None
+
+def get_my_team(message):
+    if message['players'][0] == Name:  
+        return 'light'
+    else:
+        return 'dark'
+
+def get_directions(team):
+    if team == 'light':
+        return [(1, 0), (1, -1), (1, 1)]
+    else:
+        return [(-1, 0), (-1, -1), (-1, 1)]
+
+def find_piece(board, color, team):   
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col][1]     # [1] = la pièce (ou null si case vide)
+            if piece is not None and piece[0] == color and piece[1] == team:   
+                return (row, col)
+    return None
+
+def get_valid_moves(board, row, col):
+    moves = []
+    for dr,dc in get_directions(team):
+        r,c = row + dr, col + dc        
+        while 0 <= r <= 8 and 0 <= c <= 8:
+            if board[r][c][1] is not None :   # si une pièce occupe la case
+                break
+            moves.append((r,c))         # sinon c'est un coup valide
+            r += dr                    # on continue dans la même direction
+            c += dc
+    return moves
+
+def choix_de_move(board,color,team):
+    pos = find_piece(board, color, team)
+    if pos in None:
+        return None               # pièce pas trouvée, abandon
+    row,col = pos                 # décompresse la position (ex: row=0, col=3)
+    moves = get_valid_moves(board,row,col,team)  # calcule les coups possibles
+    if not moves:
+        return None
+    if team == 'light':
+        best = max(moves, key=lambda m: m[0])   #moves c'est une liste de tuples comme [(2,3), (3,3), (4,3)]. On cherche le maximum par m[0]
+    else:                                       #moves contient des tuples (rangée, colonne), lambda sert à dire à max sur quoi comparer
+        best = min(moves, key=lambda m: m[0])   
+    return[[row,col],[best[0],best[1]]]
+
+
 Ping_port = 3000
 
 ping_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,5 +112,5 @@ while True:
     if message['request'] == 'play':
         send_message(conn, {
             'response': 'move',
-            'move': 0  
+            'move': []  
         })
