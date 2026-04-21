@@ -43,11 +43,11 @@ def find_piece(board, color, team):
                 return (row, col)
     return None
 
-def get_valid_moves(board, row, col):
+def get_valid_moves(board, row, col, team):
     moves = []
     for dr,dc in get_directions(team):
         r,c = row + dr, col + dc        
-        while 0 <= r <= 8 and 0 <= c <= 8:
+        while 0 <= r < 8 and 0 <= c < 8:
             if board[r][c][1] is not None :   # si une pièce occupe la case
                 break
             moves.append((r,c))         # sinon c'est un coup valide
@@ -57,7 +57,7 @@ def get_valid_moves(board, row, col):
 
 def choix_de_move(board,color,team):
     pos = find_piece(board, color, team)
-    if pos in None:
+    if pos is None:
         return None               # pièce pas trouvée, abandon
     row,col = pos                 # décompresse la position (ex: row=0, col=3)
     moves = get_valid_moves(board,row,col,team)  # calcule les coups possibles
@@ -110,7 +110,15 @@ while True:
         send_message(conn, {'response': 'pong'})
 
     if message['request'] == 'play':
+        board = message['board']
+        color = message['color']
+
+        if team is None:
+            team = get_my_team(message)
+
+        move = choix_de_move(board, color, team)
+
         send_message(conn, {
             'response': 'move',
-            'move': []  
+            'move': move  
         })
