@@ -1,5 +1,6 @@
 import socket 
 import json
+import copy
 import struct
 
 
@@ -70,6 +71,98 @@ def choix_de_move(board,color,team):
     return[[row,col],[best[0],best[1]]]
 
 
+def evaluate(board, my_team):
+    score = 0
+    enemy_team = 'dark' if my_team == 'light' else 'light'
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col][1]
+            if piece is None:
+                continue
+            if piece[1] == my_team:
+                if my_team == 'light':
+                    score += row * 10
+                    if row == 7:
+                        score += 1000
+                else:
+                    score += (7 - row) * 10
+                    if row == 0:
+                        score += 1000
+            else:
+                if enemy_team == 'light':
+                    score -= row * 10
+                    if row == 7:
+                        score -= 1000
+                else:
+                    score -= (7 - row) * 10
+                    if row == 0:
+                        score -= 1000
+    return score
+
+def apply_move(board, src, dst):
+    new_board = copy.deepcopy(board)
+    piece = new_board[src[0]][src[1]][1]
+    new_board[src[0]][src[1]][1] = None
+    new_board[dst[0]][dst[1]][1] = piece
+    return new_board
+
+def get_all_moves(board, team):
+    all_moves = []
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col][1]
+            if piece is not None and piece[1] == team:
+                destinations = get_valid_moves(board, row, col, team)
+                for dst in destinations:
+                    all_moves.append(([row, col], [dst[0], dst[1]]))
+    return all_moves
+
+def minimax(board, depth, alpha, beta, is_maximizing, my_team):
+    enemy_team = 'dark' if my_team == 'light' else 'light'
+    score = evaluate(board, my_team)
+    if depth == 0 or abs(score) >= 1000:
+        return score
+    if is_maximizing:
+        best_score = float('-inf')   # on part du pire score possible
+        for src, dst in get_all_moves(board, my_team):
+            new_board = apply_move(board, src, dst)  # on simule le coup
+            s = minimax(new_board, depth - 1, alpha, beta, False, my_team) #on rappelle minimax avec is_maximizing=False (tour adverse)
+            best_score = max(best_score, s)
+            alpha = max(alpha, s)
+            if beta <= alpha:
+                break
+        return best_score
+    else:
+        best_score = float('inf')
+        for src, dst in get_all_moves(board, enemy_team):
+            new_board = apply_move(board, src, dst)
+            s = minimax(new_board, depth - 1, alpha, beta, True, my_team)
+            best_score = min(best_score, s)
+            beta = min(beta, s)
+            if beta <= alpha:
+                break
+        return best_score
+
+def choix_de_move_minimax(board, color, my_team, depth=3):
+    pos = find_piece(board, color, my_team)
+    if pos is None:
+        return None
+    row, col = pos
+    destinations = get_valid_moves(board, row, col, my_team)
+    if not destinations:
+        return None
+    best_move = None
+    best_score = float('-inf')
+    for dst in destinations:
+        new_board = apply_move(board, [row, col], [dst[0], dst[1]])
+        score = minimax(new_board, depth - 1, float('-inf'), float('inf'), False, my_team)
+        if score > best_score:
+            best_score = score
+            best_move = [[row, col], [dst[0], dst[1]]]
+    return best_move
+
+
+
 Ping_port = 3000
 
 ping_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -116,7 +209,7 @@ while True:
         if team is None:
             team = get_my_team(message)
 
-        move = choix_de_move(board, color, team)
+        move = choix_de_move_minimax(board, color, team)
 
         send_message(conn, {
             'response': 'move',
