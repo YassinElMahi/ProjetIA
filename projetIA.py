@@ -83,20 +83,20 @@ def evaluate(board, my_team):
                 if my_team == 'light':
                     score += row * 10
                     if row == 7:
-                        score += 1000
+                        score += 10000
                 else:
                     score += (7 - row) * 10
                     if row == 0:
-                        score += 1000
+                        score += 10000
             else:
                 if enemy_team == 'light':
                     score -= row * 10
                     if row == 7:
-                        score -= 1000
+                        score -= 10000
                 else:
                     score -= (7 - row) * 10
                     if row == 0:
-                        score -= 1000
+                        score -= 10000
     return score
 
 def apply_move(board, src, dst):
@@ -120,7 +120,7 @@ def get_all_moves(board, team):
 def minimax(board, depth, alpha, beta, is_maximizing, my_team):
     enemy_team = 'dark' if my_team == 'light' else 'light'
     score = evaluate(board, my_team)
-    if depth == 0 or abs(score) >= 1000:
+    if depth == 0 or abs(score) >= 10000:
         return score
     if is_maximizing:
         best_score = float('-inf')   # on part du pire score possible
