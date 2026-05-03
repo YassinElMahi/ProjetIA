@@ -1,4 +1,4 @@
-from projetIA import get_directions, find_piece, get_valid_moves, evaluate, apply_move
+from projetIA import get_directions, find_piece, get_valid_moves, evaluate, apply_move, get_all_moves
 
 def make_empty_board():
     board = []
@@ -37,10 +37,18 @@ def test_evaluate_victoire():
     assert evaluate(board, "light") >= 10000
     print("test_evaluate_victoire: OK")
 
+def test_get_all_moves():
+    board = make_empty_board()
+    board[0][0][1] = ["orange", "light"]
+    moves = get_all_moves(board, "light")
+    assert len(moves) > 0
+    print("test_get_all_moves: OK")
+
 if __name__ == "__main__":
     test_get_directions_light()
     test_find_piece()
     test_get_valid_moves()
     test_apply_move()
     test_evaluate_victoire()
+    test_get_all_moves()
     print("\n Tous les tests passent !")
