@@ -25,7 +25,8 @@ Name = "MrCalvitie"
 team = None
 
 def get_my_team(message):
-    if message['players'][0] == Name:  
+    state = message['state']
+    if state['players'][0] == Name:  
         return 'light'
     else:
         return 'dark'
@@ -203,8 +204,9 @@ while True:
         send_message(conn, {'response': 'pong'})
 
     if message['request'] == 'play':
-        board = message['board']
-        color = message['color']
+        state = message['state']
+        board = state['board']
+        color = state['color']
 
         if team is None:
             team = get_my_team(message)
